@@ -1,0 +1,16 @@
+{
+  "name": "leadmachine",
+  "version": "1.0.0",
+  "description": "AI-powered lead generation system — content, bots, and lead tracking",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "content": "node src/generateContent.js"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
+    "dotenv": "^16.4.5",
+    "inquirer": "^10.1.8",
+    "ora": "^8.1.1"
+  }
+}
