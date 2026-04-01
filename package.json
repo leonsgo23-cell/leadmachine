@@ -5,7 +5,9 @@
   "main": "src/index.js",
   "type": "module",
   "scripts": {
-    "content": "node src/generateContent.js"
+    "content": "node src/generateContent.js",
+    "artkit": "node src/runBusiness.js artkit",
+    "smartskula": "node src/runBusiness.js smartskula"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",

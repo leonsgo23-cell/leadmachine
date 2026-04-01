@@ -1,6 +1,6 @@
 import Anthropic from '@anthropic-ai/sdk';
 
-const client = new Anthropic();
+const client = new Anthropic({ timeout: 120000, maxRetries: 3 });
 
 export async function generateContentPack(businessInfo) {
   const {
@@ -11,7 +11,19 @@ export async function generateContentPack(businessInfo) {
     targetAudience,
     tone,
     language,
+    funnel,
+    usp,
+    competitors_insight,
   } = businessInfo;
+
+  const funnelContext = funnel
+    ? `\nВоронка продаж:\n- Осведомлённость: ${funnel.awareness}\n- Интерес: ${funnel.interest}\n- Желание: ${funnel.desire}\n- Действие: ${funnel.action}`
+    : '';
+
+  const uspContext = usp ? `\nГлавное преимущество (USP): ${usp}` : '';
+  const competitorsContext = competitors_insight
+    ? `\nЧто сработало у конкурентов: ${competitors_insight}`
+    : '';
 
   const prompt = `Ты — эксперт по контент-маркетингу для малого бизнеса в ${location}.
 
@@ -21,11 +33,13 @@ export async function generateContentPack(businessInfo) {
 - Ценовой диапазон: ${priceRange}
 - Целевая аудитория: ${targetAudience}
 - Тон общения: ${tone}
-- Язык контента: ${language}
+- Язык контента: ${language}${uspContext}${funnelContext}${competitorsContext}
 
-ВАЖНО: Создай посты которые реально продают — не просто красивые слова, а такие которые вызывают желание записаться/купить прямо сейчас.
+Распредели 7 дней по этапам воронки: дни 1-2 на осведомлённость, дни 3-4 на интерес, дни 5-6 на желание, день 7 на действие/продажу.
 
-Создай для каждого из 7 дней посты для 4 платформ. Структура ответа строго в JSON:
+ВАЖНО: Создай посты которые реально продают — не просто красивые слова, а такие которые вызывают желание купить/записаться прямо сейчас.
+
+Создай для каждого из 7 дней посты для 5 платформ. Структура ответа строго в JSON:
 
 {
   "week_overview": "Краткое описание стратегии на неделю",
@@ -44,6 +58,14 @@ export async function generateContentPack(businessInfo) {
         "script": "Сценарий видео 30-60 секунд",
         "caption": "Подпись под видео",
         "hashtags": ["хэштег1", "хэштег2"]
+      },
+      "facebook": {
+        "post": "Пост для Facebook (можно длиннее Instagram, дружелюбный тон, хорошо работают вопросы к аудитории)"
+      },
+      "youtube": {
+        "video_idea": "Идея для YouTube видео (3-10 минут)",
+        "title": "SEO-заголовок видео",
+        "description": "Описание видео с ключевыми словами (первые 2 строки самые важные)"
       },
       "linkedin": {
         "caption": "Профессиональный пост (без лишних эмодзи, ценность и экспертиза)",
@@ -66,12 +88,19 @@ export async function generateContentPack(businessInfo) {
 
 Отвечай ТОЛЬКО валидным JSON без markdown блоков.`;
 
-  const response = await client.messages.create({
-    model: 'claude-opus-4-6',
-    max_tokens: 8000,
+  let raw = '';
+  const stream = client.messages.stream({
+    model: 'claude-sonnet-4-6',
+    max_tokens: 16000,
     messages: [{ role: 'user', content: prompt }],
   });
 
-  const text = response.content[0].text.trim();
+  for await (const chunk of stream) {
+    if (chunk.type === 'content_block_delta' && chunk.delta?.type === 'text_delta') {
+      raw += chunk.delta.text;
+    }
+  }
+
+  const text = raw.trim().replace(/^```json\s*/i, '').replace(/```\s*$/, '').trim();
   return JSON.parse(text);
 }
