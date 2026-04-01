@@ -7,12 +7,16 @@
   "scripts": {
     "content": "node src/generateContent.js",
     "artkit": "node src/runBusiness.js artkit",
-    "smartskula": "node src/runBusiness.js smartskula"
+    "smartskula": "node src/runBusiness.js smartskula",
+    "images:artkit": "node src/generateImages.js artkit",
+    "images:smartskula": "node src/generateImages.js smartskula"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
     "dotenv": "^16.4.5",
+    "groq-sdk": "^1.1.2",
     "inquirer": "^10.1.8",
+    "openai": "^6.33.0",
     "ora": "^8.1.1"
   }
 }
