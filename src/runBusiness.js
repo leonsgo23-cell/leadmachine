@@ -32,10 +32,26 @@ function saveMarkdown(data, businessInfo, businessName) {
   let md = `# Контент-план: ${businessInfo.service}\n`;
   md += `_Создан: ${new Date().toLocaleString('ru-RU')}_\n\n`;
   md += `---\n\n`;
-  md += `## Стратегия недели\n${data.week_overview}\n\n---\n\n`;
+  // week_overview may come as string or object depending on LLM response
+  const weekOverview = typeof data.week_overview === 'object' && data.week_overview !== null
+    ? Object.entries(data.week_overview).map(([k, v]) => `**${k}:** ${v}`).join('\n')
+    : (data.week_overview || '');
+  const weekMessage = data.week_message ? `**Главное послание:** ${data.week_message}\n\n` : '';
+  md += `## Стратегия недели\n${weekMessage}${weekOverview}\n\n`;
+
+  if (data.objections_handled?.length) {
+    md += `### Возражения аудитории — как план их закрывает\n`;
+    for (const obj of data.objections_handled) md += `- ${obj}\n`;
+    md += '\n';
+  }
+  md += `---\n\n`;
 
   for (const day of data.days) {
-    md += `## День ${day.day} — ${day.theme}\n\n`;
+    md += `## День ${day.day} — ${day.theme}\n`;
+    md += `> ${day.funnel_stage || ''} | ${day.pillar || ''}\n\n`;
+    if (day.hook) md += `**Хук дня:** ${day.hook}\n`;
+    if (day.core_emotion) md += `**Эмоция:** ${day.core_emotion}\n`;
+    md += '\n';
 
     md += `### Instagram\n`;
     md += `**Пост:**\n${day.instagram.caption}\n\n`;
@@ -55,6 +71,17 @@ function saveMarkdown(data, businessInfo, businessName) {
 
     md += `### Telegram\n`;
     md += `${day.telegram.message}\n\n`;
+
+    if (day.carousel_concept) {
+      const c = day.carousel_concept;
+      md += `### Карусель (слайды)\n`;
+      if (c.hook_slide) md += `**Слайд 1 (хук):** ${c.hook_slide}\n`;
+      if (c.pain_slide) md += `**Слайд 2 (боль):** ${c.pain_slide}\n`;
+      if (c.solution_slide) md += `**Слайд 3 (решение):** ${c.solution_slide}\n`;
+      if (c.proof_slide) md += `**Слайд 4 (доказательство):** ${c.proof_slide}\n`;
+      if (c.cta_slide) md += `**Слайд 5 (CTA):** ${c.cta_slide}\n`;
+      md += '\n';
+    }
 
     md += `---\n\n`;
   }
@@ -80,6 +107,10 @@ try {
     spinner.text = msg;
   });
   spinner.succeed('Контент-план готов!');
+
+  // Кэшируем JSON для generateImages.js
+  const jsonPath = path.resolve('output', `${name}_latest.json`);
+  fs.writeFileSync(jsonPath, JSON.stringify(contentPack, null, 2), 'utf-8');
 
   const filepath = saveMarkdown(contentPack, business, name);
   console.log(`\n✅ Файл сохранён: ${filepath}`);
