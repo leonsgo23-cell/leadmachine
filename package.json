@@ -9,10 +9,14 @@
     "artkit": "node src/runBusiness.js artkit",
     "smartskula": "node src/runBusiness.js smartskula",
     "images:artkit": "node src/generateImages.js artkit",
-    "images:smartskula": "node src/generateImages.js smartskula"
+    "images:smartskula": "node src/generateImages.js smartskula",
+    "videos:artkit": "node src/generateVideos.js artkit",
+    "videos:smartskula": "node src/generateVideos.js smartskula",
+    "videos:artkit:test": "node src/generateVideos.js artkit --test"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
+    "canvas": "^3.2.3",
     "dotenv": "^16.4.5",
     "groq-sdk": "^1.1.2",
     "inquirer": "^10.1.8",
